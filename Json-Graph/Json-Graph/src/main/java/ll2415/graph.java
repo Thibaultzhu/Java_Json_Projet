@@ -1,0 +1,75 @@
+package ll2415;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+//graph implemented by adjacency list
+public class graph  {
+	
+	private HashMap<String,Stop> adj= new HashMap<String,Stop>();
+	private int num_stop;
+	
+	public HashMap<String,Stop> getAdj() {
+		return adj;
+	}
+
+	public void setAdj(HashMap<String,Stop> adj) {
+		this.adj = adj;
+	}
+
+	
+	public graph(List b) {
+		// TODO Auto-generated constructor stub
+		num_stop=b.size();
+		for (Object s:b) {
+			adj.put(((Stop)s).getstop_id(),(Stop) s);
+		}
+	}
+	
+	public void addedge(String start_id, String end_id) 
+	{
+		if(adj.containsKey(start_id)&&adj.containsKey(end_id))
+		{
+			Stop start = adj.get(start_id);
+			Stop end = adj.get(end_id);
+			if(!start.getEdges().containsKey(end))
+			{
+				double weight = (start.getstop_lat()-end.getstop_lat())*(start.getstop_lat()-end.getstop_lat())+(start.getstop_lon()-end.getstop_lon())*(start.getstop_lon()-end.getstop_lon());
+				weight = Math.sqrt(weight);
+				start.addedge(adj.get(end_id), weight);
+				System.out.println("add transfer: "+start_id+"  "+end_id);	
+			}
+			else
+			{
+				System.out.println("this edge has been created");
+			}
+		}
+		else
+		{
+			System.out.println("error");
+		}
+	}
+		
+	/*public void show_all_edge() {
+		for(Stop vertex:adj) {
+			System.out.println("vertex:"+vertex.getstop_id()+"  " );
+			
+			for(Edge edge:vertex.getEdgelist()) {
+				System.out.println(vertex.getstop_id()+"  "+edge.getEndvertex().getstop_id()+"  "+edge.getWeight());
+			}
+		}
+	}*/
+	
+	
+	
+	public int getNum_stop() {
+		return num_stop;
+	}
+
+	public void setNum_stop(int num_stop) {
+		this.num_stop = num_stop;
+	}
+		
+	}

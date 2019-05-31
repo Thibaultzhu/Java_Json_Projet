@@ -1,0 +1,230 @@
+package ll2415;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.image.ImageObserver;
+import java.awt.print.Printable;
+import java.text.AttributedCharacterIterator;
+import java.io.File;
+import java.io.IOException;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import javax.swing.*;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+
+@SuppressWarnings({ "unused", "unused" })
+public class JavaToJson {
+	
+	private ObjectMapper objectMapper = new ObjectMapper();
+	private static List<Object> myObjects_Stop = new ArrayList<Object>();
+	private static List<Object> myObjects_Transfer = new ArrayList<Object>();
+	private static List<Object> myObjects_Arrets = new ArrayList<Object>();
+	private static List<Object> visit = new ArrayList<Object>();
+	private static List<ArrayList<Object>> visit_line = new ArrayList<ArrayList<Object>>();
+	private static List<Object> path = new ArrayList<Object>();
+	
+	public static void  main(String[] args) {
+		// TODO Auto-generated method stub
+		new JavaToJson().jsonToJava();
+		for(Object a:myObjects_Arrets)
+		{
+			for(int i = 0;i<((Arret)a).getArrets().size()-1;i++)
+			{
+				String start = ((Arret)a).getArrets().get(i);
+				String end = ((Arret)a).getArrets().get(i+1);
+				Transfer temp_transfer = new Transfer();
+				temp_transfer.setfrom_stop_id(start);
+				temp_transfer.setto_stop_id(end);
+				myObjects_Transfer.add(temp_transfer);
+			}
+		}
+		GetMatrix graph = new GetMatrix(myObjects_Transfer, myObjects_Stop);
+		Dijkstra dijkstra_improve = new Dijkstra (graph.getGra(),"B_2006","3798484");
+		HashMap<String, Double> show = dijkstra_improve.Dijkstra_shortest(graph.getGra());
+		
+		//Dijkstra dijkstra = new Dijkstra (graph.getGra(),"B_2006","3798484");
+		//HashMap<String, Double> show = dijkstra.Dijkstra_shortest(graph.getGra());
+		
+		
+		for(Entry<String, Double> entry:show.entrySet()) {
+			String id=entry.getKey();
+			int index = 0;
+			if(id!="3798484")
+			{
+				visit.add(graph.getGra().getAdj().get(id));
+				List<Object>visit_temp=new ArrayList<Object>();
+				while(id!="-1")
+				{
+					visit_temp.add(id);
+					id = graph.getGra().getAdj().get(id).getFather();
+				}
+				visit_line.add((ArrayList<Object>) visit_temp);
+			}
+		}
+		
+		String travel = "3798484";
+		while(travel!="-1")
+		{
+			path.add(travel);
+			System.out.println(travel);
+			travel = graph.getGra().getAdj().get(travel).getFather();
+		}
+		print(graph);
+	}
+	
+	private void javaToJson()
+	{
+		/*Person person = monk();
+		try {
+			objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File("E://ubuntu//person.txt"),person);
+		} catch (JsonGenerationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+	}
+	
+	private void jsonToJava()
+	{
+		List<Object> temp = new ArrayList<Object>();
+		try {
+			temp = objectMapper.readValue(new File("stops.json"), new TypeReference<List<temp_stop>>(){});
+			//for(Object myObject:myObjects_Stop)
+				//System.out.println(((Stop) myObject).getstop_id()+" "+((Stop) myObject).getstop_lat()+" "+((Stop) myObject).getstop_lon());
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		for(Object t:temp)
+		{
+			Stop tp = new Stop();
+			tp.setstop_id(((temp_stop)t).getStop_id());
+			tp.setstop_lat(((temp_stop)t).getStop_lat());
+			tp.setstop_lon(((temp_stop)t).getStop_lon());
+			System.out.println(tp.getstop_id()+" "+tp.getstop_lat()+" "+tp.getstop_lon());
+			myObjects_Stop.add(tp);
+		}
+		temp.clear();
+		
+		try {
+			myObjects_Arrets = objectMapper.readValue(new File("arrets.json"), new TypeReference<List<Arret>>(){});
+			//for(Object myObject:myObjects_Transfer)
+				//System.out.println(((Transfer) myObject).getfrom_stop_id()+" "+((Transfer) myObject).getto_stop_id()+" "+((Transfer) myObject).getmin_transfer_time());
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public static void print(GetMatrix graph)
+	{
+		List<SimpleEntry<Integer, Integer>> points = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> transfer1 = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> transfer2 = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> line1 = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> line2 = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> visit_line1 = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> visit_line2 = new ArrayList();
+		List<SimpleEntry<Integer, Integer>> paths = new ArrayList();
+		
+		JFrame window = new JFrame("Metro Map");
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setSize(2000, 1000);
+		window.setBackground(Color.black);
+		Test1 p = new Test1();
+		for(Object stop:myObjects_Stop)
+		{
+			int lat1 = (int)((((Stop)stop).getstop_lat()-48.6)*5000-400);
+			int lon1 = (int)((((Stop)stop).getstop_lon()-2)*2400-200);
+			points.add(new SimpleEntry<Integer, Integer>(lat1, lon1));	
+		}
+		for(Object transfer:myObjects_Transfer)
+		{
+			int lat1 = (int)((graph.getGra().getAdj().get(((Transfer)transfer).getfrom_stop_id()).getstop_lat()-48.6)*5000-400);
+			int lon1 = (int)((graph.getGra().getAdj().get(((Transfer)transfer).getfrom_stop_id()).getstop_lon()-2)*2400-200);
+			int lat2 = (int)((graph.getGra().getAdj().get(((Transfer)transfer).getto_stop_id()).getstop_lat()-48.6)*5000-400);
+			int lon2 = (int)((graph.getGra().getAdj().get(((Transfer)transfer).getto_stop_id()).getstop_lon()-2)*2400-200);
+			transfer1.add(new SimpleEntry<Integer, Integer>(lat1, lon1));
+			transfer2.add(new SimpleEntry<Integer, Integer>(lat2, lon2));
+		}
+		
+		for(int i = 0;i<path.size()-1;i++)
+		{
+			String start = (String) path.get(i);
+			String end = (String) path.get(i+1);
+			int lat1 = (int)((graph.getGra().getAdj().get(start).getstop_lat()-48.6)*5000-400);
+			int lon1 = (int)((graph.getGra().getAdj().get(start).getstop_lon()-2)*2400-200);
+			int lat2 = (int)((graph.getGra().getAdj().get(end).getstop_lat()-48.6)*5000-400);
+			int lon2 = (int)((graph.getGra().getAdj().get(end).getstop_lon()-2)*2400-200);
+			line1.add(new SimpleEntry<Integer, Integer>(lat1, lon1));
+			line2.add(new SimpleEntry<Integer, Integer>(lat2, lon2));
+		}
+		
+		for(int i = 0;i<visit_line.size();i++)
+		{
+			for(int j = 0;j<visit_line.get(i).size()-1;j++)
+			{
+				String start = (String) visit_line.get(i).get(j);
+				String end = (String) visit_line.get(i).get(j+1);
+				int lat1 = (int)((graph.getGra().getAdj().get(start).getstop_lat()-48.6)*5000-400);
+				int lon1 = (int)((graph.getGra().getAdj().get(start).getstop_lon()-2)*2400-200);
+				int lat2 = (int)((graph.getGra().getAdj().get(end).getstop_lat()-48.6)*5000-400);
+				int lon2 = (int)((graph.getGra().getAdj().get(end).getstop_lon()-2)*2400-200);
+				visit_line1.add(new SimpleEntry<Integer, Integer>(lat1, lon1));
+				visit_line2.add(new SimpleEntry<Integer, Integer>(lat2, lon2));
+			}
+		}
+		
+		
+		for(Object pa:visit)
+		{
+			int lat1 = (int)((((Stop)pa).getstop_lat()-48.6)*5000-400);
+			int lon1 = (int)((((Stop)pa).getstop_lon()-2)*2400-200);
+			paths.add(new SimpleEntry<Integer, Integer>(lat1, lon1));	
+		}
+		
+		p.setPoints(points);
+		p.setLines1(line1);
+		p.setLines2(line2);
+		p.setVisit_line1(visit_line1);
+		p.setVisit_line2(visit_line2);
+		p.setTransfer1(transfer1);
+		p.setTransfer2(transfer2);
+		p.setPath(paths);
+		window.add(p);
+		window.setVisible(true);
+	}
+}
